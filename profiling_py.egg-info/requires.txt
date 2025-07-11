@@ -1,0 +1,8 @@
+
+[dynamic]
+dependencies
+
+[reports]
+jinja2>=3.1
+pandas>=1.5
+plotly>=5.0

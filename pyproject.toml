@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "profiling_py"
+version = "0.1.0"
+description = "Lightweight step-based profiler with HTML reporting (Python port of profiling_R)"
+authors = [ { name = "Radek", email = "radek@example.com" } ]
+requires-python = ">=3.8"
+readme = "README.md"
+license = { text = "MIT" }
+keywords = ["profiling", "performance", "memory", "timing"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+reports = ["pandas>=1.5", "jinja2>=3.1", "plotly>=5.0"]
+
+dynamic = ["dependencies"]
+
+[tool.setuptools]
+packages = ["profiling_py"]
