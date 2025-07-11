@@ -122,6 +122,8 @@ def generate_profiling_report(
 
     # Build plots
     duration_plot, memory_plot = _build_plots(rows, has_memory)
+    duration_plot_json = json.dumps(duration_plot)
+    memory_plot_json = json.dumps(memory_plot) if memory_plot is not None else None
 
     # Render template
     template = _load_template()
@@ -130,8 +132,8 @@ def generate_profiling_report(
         kpis=kpis,
         rows=rows,
         has_memory=has_memory,
-        duration_plot=duration_plot,
-        memory_plot=memory_plot,
+        duration_plot_json=duration_plot_json,
+        memory_plot_json=memory_plot_json,
         generated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
 
@@ -146,7 +148,10 @@ def generate_profiling_report(
         with open(out_path, "w", encoding="utf-8") as fh:
             fh.write(html)
         if open_browser:
-            webbrowser.open(f"file://{os.path.abspath(out_path)}")
+            try:
+                webbrowser.open(f"file://{os.path.abspath(out_path)}")
+            except webbrowser.Error:
+                print(f"[profiling_py] Report saved to {out_path}. Unable to launch browser.")
     else:
         # If caller passed output_dir=None they only want the string.
         if open_browser:

@@ -78,10 +78,10 @@
     </div>
 
     <script>
-      const durationData = {{ duration_plot | safe }};
+      const durationData = {{ duration_plot_json | safe }};
       Plotly.newPlot('duration-chart', durationData.data, durationData.layout);
       {% if has_memory %}
-      const memoryData = {{ memory_plot | safe }};
+      const memoryData = {{ memory_plot_json | safe }};
       Plotly.newPlot('memory-chart', memoryData.data, memoryData.layout);
       {% endif %}
     </script>
