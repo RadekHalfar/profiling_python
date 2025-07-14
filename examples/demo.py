@@ -38,5 +38,5 @@ do_work()
 
 # Generate interactive HTML report and open in browser
 print("Generating report …")
-report_path = generate_profiling_report(prof, open_browser=True)
+report_path = generate_profiling_report(prof, open_browser=False)
 print("Report saved ✔")

@@ -31,32 +31,72 @@ def _load_template() -> jinja2.Template:
 
 
 def _build_plots(rows: List[Dict[str, Any]], has_memory: bool):
-    # Duration bar chart
-    fig_duration = px.bar(
-        rows,
-        x="duration",
-        y="step",
-        orientation="h",
-        labels={"duration": "Seconds", "step": "Step"},
-        title="Execution Time by Step",
-    )
-    fig_duration.update_layout(yaxis_categoryorder="total ascending", height=400, margin=dict(l=80, r=30, t=50))
-
-    duration_plot = json.loads(fig_duration.to_json())
-
+    # Prepare data for duration plot
+    steps = []
+    durations = []
+    for r in rows:
+        steps.append(str(r["step"]))
+        durations.append(float(r["duration"]))
+    
+    # Create duration plot
+    duration_plot = {
+        "data": [{
+            "type": "bar",
+            "x": durations,
+            "y": steps,
+            "orientation": "h"
+        }],
+        "layout": {
+            "title": "Execution Time by Step",
+            "yaxis": {
+                "title": "Step",
+                "categoryorder": "total ascending"
+            },
+            "xaxis": {
+                "title": "Seconds",
+                "tickformat": ".3f"
+            },
+            "height": 400,
+            "margin": {"l": 120, "r": 30, "t": 50, "b": 30}
+        }
+    }
+    
     memory_plot = None
     if has_memory:
-        fig_memory = px.bar(
-            rows,
-            x="memory_kb",
-            y="step",
-            orientation="h",
-            labels={"memory_kb": "KB", "step": "Step"},
-            title="Memory Δ by Step",
-        )
-        fig_memory.update_layout(yaxis_categoryorder="total ascending", height=400, margin=dict(l=80, r=30, t=50))
-        memory_plot = json.loads(fig_memory.to_json())
-
+        # Prepare data for plotting
+        steps = []
+        memory_values = []
+        for r in rows:
+            mem_kb = r["memory_kb"]
+            if mem_kb is None:
+                mem_kb = 0.0
+            steps.append(str(r["step"]))
+            memory_values.append(float(mem_kb))
+        
+        # Manually create the plot data structure
+        memory_plot = {
+            "data": [{
+                "type": "bar",
+                "x": memory_values,
+                "y": steps,
+                "orientation": "h"
+            }],
+            "layout": {
+                "title": "Memory Δ by Step",
+                "yaxis": {
+                    "title": "Step",
+                    "categoryorder": "total ascending"
+                },
+                "xaxis": {
+                    "title": "Memory (KB)",
+                    "type": "linear",
+                    "tickformat": ".1f"
+                },
+                "height": 400,
+                "margin": {"l": 120, "r": 30, "t": 50, "b": 30}
+            }
+        }
+        
     return duration_plot, memory_plot
 
 
