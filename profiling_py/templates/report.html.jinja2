@@ -40,14 +40,16 @@
       </div>
 
       <!-- Charts -->
-      <div class="mb-4">
-        <div id="duration-chart"></div>
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div id="duration-chart"></div>
+        </div>
+        {% if has_memory %}
+        <div class="col-md-6">
+          <div id="memory-chart"></div>
+        </div>
+        {% endif %}
       </div>
-      {% if has_memory %}
-      <div class="mb-4">
-        <div id="memory-chart"></div>
-      </div>
-      {% endif %}
 
       <!-- Data table -->
       <div class="card">

@@ -47,17 +47,22 @@ def _build_plots(rows: List[Dict[str, Any]], has_memory: bool):
             "orientation": "h"
         }],
         "layout": {
-            "title": "Execution Time by Step",
+            "title": "Duration by Step",
             "yaxis": {
                 "title": "Step",
-                "categoryorder": "total ascending"
+                "categoryorder": "total ascending",
+                "title_standoff": 30,
+                "ticklen": 10,
+                "tickfont": {"size": 11}
             },
             "xaxis": {
-                "title": "Seconds",
+                "title": "Duration (s)",
+                "type": "linear",
                 "tickformat": ".3f"
             },
             "height": 400,
-            "margin": {"l": 120, "r": 30, "t": 50, "b": 30}
+            "width": 650,
+            "margin": {"l": 120, "r": 30, "t": 50, "b": 50}
         }
     }
     
@@ -85,7 +90,12 @@ def _build_plots(rows: List[Dict[str, Any]], has_memory: bool):
                 "title": "Memory Δ by Step",
                 "yaxis": {
                     "title": "Step",
-                    "categoryorder": "total ascending"
+                    "categoryorder": "total ascending",
+                    "title_standoff": 30,
+                    "ticklen": 10,
+                    "tickfont": {"size": 11},
+                    "showticklabels": True,
+                    "automargin": True
                 },
                 "xaxis": {
                     "title": "Memory (KB)",
@@ -93,7 +103,8 @@ def _build_plots(rows: List[Dict[str, Any]], has_memory: bool):
                     "tickformat": ".1f"
                 },
                 "height": 400,
-                "margin": {"l": 120, "r": 30, "t": 50, "b": 30}
+                "width": 650,
+                "margin": {"l": 120, "r": 30, "t": 50, "b": 50}
             }
         }
         
