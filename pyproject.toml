@@ -25,3 +25,4 @@ dynamic = ["dependencies"]
 
 [tool.setuptools]
 packages = ["profiling_py"]
+package-data = { "profiling_py": ["templates/*.jinja2"] }
