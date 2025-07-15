@@ -6,6 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+      .sortable {
+        cursor: pointer;
+        position: relative;
+        padding-right: 20px;
+      }
+      .sortable::after {
+        content: "⇅";
+        position: absolute;
+        right: 5px;
+        opacity: 0.5;
+        font-size: 0.8em;
+      }
+      .sortable.asc::after {
+        content: "↑";
+        opacity: 1;
+      }
+      .sortable.desc::after {
+        content: "↓";
+        opacity: 1;
+      }
+      .table th {
+        white-space: nowrap;
+      }
+    </style>
   </head>
   <body class="bg-light">
     <div class="container my-4">
@@ -61,14 +86,14 @@
             <table class="table table-striped table-hover">
               <thead>
                 <tr>
-                  <th>Step</th>
-                  {% if has_time %}<th>Duration (s)</th>{% endif %}
-                  {% if has_memory %}<th>RAM Δ (KB)</th>{% endif %}
+                  <th class="sortable" onclick="sortTable(0, 'string')">Step</th>
+                  {% if has_time %}<th class="sortable" onclick="sortTable(1, 'number')">Duration (s)</th>{% endif %}
+                  {% if has_memory %}<th class="sortable" onclick="sortTable({{ 2 if has_time else 1 }}, 'number')">RAM Δ (KB)</th>{% endif %}
                   {% if has_gpu %}
-                    <th>GPU Util (%)</th>
-                    <th>GPU Mem Used (MB)</th>
-                    <th>GPU Δ (MB)</th>
-                    <th>GPU Temp (°C)</th>
+                    <th class="sortable" onclick="sortTable({{ 3 if has_time and has_memory else 2 if has_time or has_memory else 1 }}, 'number')">GPU Util (%)</th>
+                    <th class="sortable" onclick="sortTable({{ 4 if has_time and has_memory else 3 if has_time or has_memory else 1 }}, 'number')">GPU Mem Used (MB)</th>
+                    <th class="sortable" onclick="sortTable({{ 5 if has_time and has_memory else 4 if has_time or has_memory else 1 }}, 'number')">GPU Δ (MB)</th>
+                    <th class="sortable" onclick="sortTable({{ 6 if has_time and has_memory else 5 if has_time or has_memory else 1 }}, 'number')">GPU Temp (°C)</th>
                   {% endif %}
                 </tr>
               </thead>
@@ -123,6 +148,69 @@
         }
         {% endif %}
       {% endif %}
+    </script>
+    
+    <script>
+      // Store the current sort state for each column
+      const sortStates = {};
+      
+      function sortTable(columnIndex, type) {
+        const table = document.querySelector('.table');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        // Toggle sort direction or set to ascending by default
+        const currentSort = sortStates[columnIndex];
+        const sortDirection = currentSort === 'asc' ? 'desc' : 'asc';
+        
+        // Reset all sort indicators
+        document.querySelectorAll('.sortable').forEach(th => {
+          th.classList.remove('asc', 'desc');
+        });
+        
+        // Set the sort indicator for the clicked column
+        const header = table.querySelectorAll('th')[columnIndex];
+        header.classList.add(sortDirection);
+        
+        // Update sort state
+        sortStates[columnIndex] = sortDirection;
+        
+        // Sort the rows
+        rows.sort((a, b) => {
+          let aValue = a.cells[columnIndex].textContent.trim();
+          let bValue = b.cells[columnIndex].textContent.trim();
+          
+          // Handle 'N/A' values by treating them as null
+          if (aValue === 'N/A') aValue = null;
+          if (bValue === 'N/A') bValue = null;
+          
+          // Handle different data types
+          if (type === 'number') {
+            aValue = aValue ? parseFloat(aValue.replace(/[^0-9.-]+/g, '')) : null;
+            bValue = bValue ? parseFloat(bValue.replace(/[^0-9.-]+/g, '')) : null;
+          }
+          
+          // Handle null values
+          if (aValue === null && bValue === null) return 0;
+          if (aValue === null) return sortDirection === 'asc' ? -1 : 1;
+          if (bValue === null) return sortDirection === 'asc' ? 1 : -1;
+          
+          // Compare values
+          if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+          if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+          return 0;
+        });
+        
+        // Rebuild the table
+        rows.forEach(row => tbody.appendChild(row));
+      }
+      
+      // Add tooltips to sortable headers
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.sortable').forEach(th => {
+          th.title = 'Click to sort';
+        });
+      });
     </script>
   </body>
 </html>
