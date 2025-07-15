@@ -152,11 +152,8 @@ def main():
     generate_profiling_report(
         prof,
         output_dir="./profiling_reports",
-        file_name=f"profiling_report_{int(time.time())}",
-        open_browser=False,
-        measure_time=True,
-        measure_ram=True,
-        measure_gpu=has_gpu
+        file_name=f"gpu_profiling_report_{int(time.time())}",
+        open_browser=False
     )
     
     print(f"\nProfiling report generated. {'GPU metrics included.' if has_gpu else 'No GPU detected.'}")
