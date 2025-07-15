@@ -31,52 +31,56 @@ def _load_template() -> jinja2.Template:
 
 
 def _build_plots(rows: List[Dict[str, Any]], has_memory: bool):
-    # Prepare data for duration plot
-    steps = []
-    durations = []
-    for r in rows:
-        steps.append(str(r["step"]))
-        durations.append(float(r["duration"]))
-    
-    # Create duration plot
-    duration_plot = {
-        "data": [{
-            "type": "bar",
-            "x": durations,
-            "y": steps,
-            "orientation": "h"
-        }],
-        "layout": {
-            "title": "Duration by Step",
-            "yaxis": {
-                "title": "Step",
-                "categoryorder": "total ascending",
-                "title_standoff": 30,
-                "ticklen": 10,
-                "tickfont": {"size": 11}
-            },
-            "xaxis": {
-                "title": "Duration (s)",
-                "type": "linear",
-                "tickformat": ".3f"
-            },
-            "height": 400,
-            "width": 650,
-            "margin": {"l": 120, "r": 30, "t": 50, "b": 50}
-        }
-    }
-    
+    duration_plot = None
     memory_plot = None
-    if has_memory:
-        # Prepare data for plotting
+    
+    # Check if we have duration data to plot
+    if rows and "duration" in rows[0]:
+        # Prepare data for duration plot
+        steps = []
+        durations = []
+        for r in rows:
+            if "duration" in r and r["duration"] is not None:
+                steps.append(str(r["step"]))
+                durations.append(float(r["duration"]))
+        
+        if steps:  # Only create plot if we have data
+            duration_plot = {
+                "data": [{
+                    "type": "bar",
+                    "x": durations,
+                    "y": steps,
+                    "orientation": "h"
+                }],
+                "layout": {
+                    "title": "Duration by Step",
+                    "yaxis": {
+                        "title": "Step",
+                        "categoryorder": "total ascending",
+                        "title_standoff": 30,
+                        "ticklen": 10,
+                        "tickfont": {"size": 11}
+                    },
+                    "xaxis": {
+                        "title": "Duration (s)",
+                        "type": "linear",
+                        "tickformat": ".3f"
+                    },
+                    "height": 400,
+                    "width": 1200,
+                    "margin": {"l": 120, "r": 30, "t": 50, "b": 80},
+                }
+            }
+    
+    # Check if we have memory data to plot
+    if has_memory and rows and "memory_kb" in rows[0]:
+        # Prepare data for memory plot
         steps = []
         memory_values = []
         for r in rows:
-            mem_kb = r["memory_kb"]
-            if mem_kb is None:
-                mem_kb = 0.0
-            steps.append(str(r["step"]))
-            memory_values.append(float(mem_kb))
+            if "memory_kb" in r and r["memory_kb"] is not None:
+                steps.append(str(r["step"]))
+                memory_values.append(float(r["memory_kb"]))
         
         # Manually create the plot data structure
         memory_plot = {
@@ -87,7 +91,7 @@ def _build_plots(rows: List[Dict[str, Any]], has_memory: bool):
                 "orientation": "h"
             }],
             "layout": {
-                "title": "Memory Δ by Step",
+                "title": "RAM Δ by Step",
                 "yaxis": {
                     "title": "Step",
                     "categoryorder": "total ascending",
@@ -98,13 +102,13 @@ def _build_plots(rows: List[Dict[str, Any]], has_memory: bool):
                     "automargin": True
                 },
                 "xaxis": {
-                    "title": "Memory (KB)",
+                    "title": "RAM (KB)",
                     "type": "linear",
                     "tickformat": ".1f"
                 },
                 "height": 400,
-                "width": 650,
-                "margin": {"l": 120, "r": 30, "t": 50, "b": 50}
+                "width": 1200,
+                "margin": {"l": 120, "r": 30, "t": 80, "b": 50}  # Increased top margin for memory plot
             }
         }
         
@@ -117,6 +121,8 @@ def generate_profiling_report(
     output_dir: str | None = "profiling_reports",
     file_name: str | None = None,
     open_browser: bool = False,
+    measure_time: bool = True,
+    measure_ram: bool = True,
 ) -> str:
     """Generate an interactive HTML profiling report.
 
@@ -133,6 +139,10 @@ def generate_profiling_report(
         default.
     open_browser
         If *True*, open the generated report in the default web browser.
+    measure_time
+        If *True* (default), include time measurements in the report.
+    measure_ram
+        If *True* (default), include RAM measurements in the report.
 
     Returns
     -------
@@ -147,34 +157,48 @@ def generate_profiling_report(
     # Prepare tabular rows
     rows: List[Dict[str, Any]] = []
     for s in profiler.steps:
-        mem_kb = s["memory_bytes"] / 1024 if s["memory_bytes"] is not None else None
-        rows.append({
-            "step": s["step"],
-            "duration": round(s["duration"], 6),
-            "memory_kb": round(mem_kb, 1) if mem_kb is not None else None,
-        })
+        row = {"step": s["step"]}
+        if profiler.enable_time:
+            row["duration"] = round(s["duration"], 6)
+        if profiler.enable_memory and s["memory_bytes"] is not None:
+            row["memory_kb"] = round(s["memory_bytes"] / 1024, 1)
+        rows.append(row)
 
-    has_memory = any(r["memory_kb"] is not None for r in rows)
+    # Check if we have any memory data
+    has_memory = measure_ram and any("memory_kb" in r and r["memory_kb"] is not None for r in rows)
 
     # KPI metrics
-    total_time = sum(r["duration"] for r in rows)
-    avg_time = total_time / len(rows)
-    longest_step = max(rows, key=lambda r: r["duration"])
-    peak_mem_kb = max((r["memory_kb"] or 0) for r in rows) if has_memory else None
-
-    kpis: Sequence[Dict[str, str]] = [
-        {"label": "Total Time (s)", "value": f"{total_time:.3f}"},
-        {"label": "Average Step (s)", "value": f"{avg_time:.3f}"},
-        {"label": "Longest Step (s)", "value": f"{longest_step['duration']:.3f}"},
-        {"label": "Steps", "value": str(len(rows))},
-    ]
-    if has_memory:
-        kpis = list(kpis) + [{"label": "Peak Δ (KB)", "value": f"{peak_mem_kb:.1f}"}]
+    kpis: List[Dict[str, str]] = []
+    
+    if profiler.enable_time:
+        total_time = sum(r["duration"] for r in rows if "duration" in r)
+        avg_time = total_time / len(rows)
+        longest_step = max(rows, key=lambda r: r.get("duration", 0))
+        kpis.extend([
+            {"label": "Total Time (s)", "value": f"{total_time:.3f}"},
+            {"label": "Average Step (s)", "value": f"{avg_time:.3f}"},
+            {"label": "Longest Step (s)", "value": f"{longest_step.get('duration', 0):.3f}"},
+        ])
+    
+    kpis.append({"label": "Steps", "value": str(len(rows))})
+    
+    if profiler.enable_memory and has_memory:
+        peak_mem_kb = max((r.get("memory_kb", 0) for r in rows), default=0)
+        kpis.append({"label": "Peak RAM Δ (KB)", "value": f"{peak_mem_kb:.1f}"})
 
     # Build plots
-    duration_plot, memory_plot = _build_plots(rows, has_memory)
-    duration_plot_json = json.dumps(duration_plot)
-    memory_plot_json = json.dumps(memory_plot) if memory_plot is not None else None
+    duration_plot_json, memory_plot_json = None, None
+    
+    if profiler.enable_time:
+        duration_plot, _ = _build_plots(rows, False)
+        duration_plot_json = json.dumps(duration_plot)
+    
+    if profiler.enable_memory and has_memory:
+        # Only pass rows with memory data to _build_plots
+        memory_rows = [r for r in rows if "memory_kb" in r and r["memory_kb"] is not None]
+        if memory_rows:  # Only build memory plot if we have memory data
+            _, memory_plot = _build_plots(memory_rows, True)
+            memory_plot_json = json.dumps(memory_plot) if memory_plot is not None else None
 
     # Render template
     template = _load_template()
@@ -182,7 +206,8 @@ def generate_profiling_report(
         metadata=profiler.metadata,
         kpis=kpis,
         rows=rows,
-        has_memory=has_memory,
+        has_time=profiler.enable_time,
+        has_memory=has_memory and profiler.enable_memory,
         duration_plot_json=duration_plot_json,
         memory_plot_json=memory_plot_json,
         generated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),

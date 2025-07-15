@@ -38,13 +38,20 @@ class Profiler:
 
     Parameters
     ----------
+    enable_time : bool, default True
+        If *True*, time measurements will be captured for each step.
     enable_memory : bool, default False
-        If *True*, memory usage will be captured (not yet implemented).
+        If *True*, memory usage will be captured for each step.
     metadata : dict[str, str] | None
         Optional user metadata to embed in the final report.
     """
 
-    def __init__(self, *, enable_memory: bool = False, metadata: Optional[Dict[str, str]] = None) -> None:
+    def __init__(self, *, 
+                enable_time: bool = True,
+                enable_memory: bool = False,
+                metadata: Optional[Dict[str, str]] = None
+            ) -> None:
+        self.enable_time = enable_time
         self.enable_memory = enable_memory
         self.metadata: Dict[str, str] = metadata or {}
         self.steps: List[Dict[str, object]] = []
@@ -70,7 +77,11 @@ class Profiler:
         if name in self._open_steps:
             raise ValueError(f"Step '{name}' already started.")
 
-        start_time = time.perf_counter()
+        if self.enable_time:
+            start_time = time.perf_counter()
+        else:
+            start_time = 0.0  # Use a dummy value if time measurement is disabled
+        
         snapshot_before = tracemalloc.take_snapshot() if self.enable_memory else None
         self._open_steps[name] = (start_time, snapshot_before)
 
@@ -90,6 +101,12 @@ class Profiler:
             if snap_before is not None:
                 stats = snap_after.compare_to(snap_before, "filename")
                 memory_bytes = sum(s.size_diff for s in stats)
+        
+        if self.enable_time:
+            duration = end_time - start_time
+        else:
+            duration = 0.0  # Use a dummy value if time measurement is disabled
+        
         row = _StepRow(
             step=name,
             start_time=start_time,

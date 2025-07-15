@@ -9,7 +9,7 @@ from time import sleep
 from profiling_py import Profiler, generate_profiling_report
 
 # Create a dedicated profiler with memory tracking enabled
-prof = Profiler(enable_memory=True, metadata={
+prof = Profiler(enable_memory=True, enable_time=True, metadata={
     "script": "demo.py",
     "description": "Demonstration of profiling_py (memory on)",
 })

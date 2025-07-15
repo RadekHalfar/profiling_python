@@ -40,14 +40,12 @@
       </div>
 
       <!-- Charts -->
-      <div class="row mb-4">
-        <div class="col-md-6">
-          <div id="duration-chart"></div>
-        </div>
+      <div class="mb-5">
+        {% if has_time %}
+        <div id="duration-chart" class="mb-5"></div>
+        {% endif %}
         {% if has_memory %}
-        <div class="col-md-6">
-          <div id="memory-chart"></div>
-        </div>
+        <div id="memory-chart" class="{% if has_time %}mt-5{% endif %}"></div>
         {% endif %}
       </div>
 
@@ -60,16 +58,16 @@
               <thead>
                 <tr>
                   <th>Step</th>
-                  <th>Duration (s)</th>
-                  {% if has_memory %}<th>Memory Δ (KB)</th>{% endif %}
+                  {% if has_time %}<th>Duration (s)</th>{% endif %}
+                  {% if has_memory %}<th>RAM Δ (KB)</th>{% endif %}
                 </tr>
               </thead>
               <tbody>
                 {% for row in rows %}
                 <tr>
                   <td>{{ row.step }}</td>
-                  <td>{{ "%.3f"|format(row.duration) }}</td>
-                  {% if has_memory %}<td>{{ "%.1f"|format(row.memory_kb) }}</td>{% endif %}
+                  {% if has_time %}<td>{{ "%.3f"|format(row.duration) if row.duration is not none else 'N/A' }}</td>{% endif %}
+                  {% if has_memory %}<td>{{ "%.1f"|format(row.memory_kb) if row.memory_kb is not none else 'N/A' }}</td>{% endif %}
                 </tr>
                 {% endfor %}
               </tbody>
@@ -80,8 +78,10 @@
     </div>
 
     <script>
+      {% if has_time %}
       const durationData = {{ duration_plot_json | safe }};
       Plotly.newPlot('duration-chart', durationData.data, durationData.layout);
+      {% endif %}
       {% if has_memory %}
       const memoryData = {{ memory_plot_json | safe }};
       Plotly.newPlot('memory-chart', memoryData.data, memoryData.layout);
