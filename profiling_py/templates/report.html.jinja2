@@ -45,7 +45,11 @@
         <div id="duration-chart" class="mb-5"></div>
         {% endif %}
         {% if has_memory %}
-        <div id="memory-chart" class="{% if has_time %}mt-5{% endif %}"></div>
+        <div id="memory-chart" class="{% if has_time %}mt-5{% endif %} mb-5"></div>
+        {% endif %}
+        {% if has_gpu %}
+        <div id="gpu-utilization-chart" class="{% if has_memory or has_time %}mt-5{% endif %} mb-5"></div>
+        <div id="gpu-memory-chart" class="mt-5"></div>
         {% endif %}
       </div>
 
@@ -60,6 +64,12 @@
                   <th>Step</th>
                   {% if has_time %}<th>Duration (s)</th>{% endif %}
                   {% if has_memory %}<th>RAM Δ (KB)</th>{% endif %}
+                  {% if has_gpu %}
+                    <th>GPU Util (%)</th>
+                    <th>GPU Mem Used (MB)</th>
+                    <th>GPU Δ (MB)</th>
+                    <th>GPU Temp (°C)</th>
+                  {% endif %}
                 </tr>
               </thead>
               <tbody>
@@ -68,6 +78,12 @@
                   <td>{{ row.step }}</td>
                   {% if has_time %}<td>{{ "%.3f"|format(row.duration) if row.duration is not none else 'N/A' }}</td>{% endif %}
                   {% if has_memory %}<td>{{ "%.1f"|format(row.memory_kb) if row.memory_kb is not none else 'N/A' }}</td>{% endif %}
+                  {% if has_gpu %}
+                    <td>{{ "%.1f"|format(row.gpu_utilization) if 'gpu_utilization' in row and row.gpu_utilization is not none else 'N/A' }}</td>
+                    <td>{{ "%.1f"|format(row.gpu_memory_used_mb) if 'gpu_memory_used_mb' in row and row.gpu_memory_used_mb is not none else 'N/A' }}</td>
+                    <td>{{ "%+.1f"|format(row.gpu_memory_delta_mb) if 'gpu_memory_delta_mb' in row and row.gpu_memory_delta_mb is not none else 'N/A' }}</td>
+                    <td>{{ row.gpu_temperature_gpu if 'gpu_temperature_gpu' in row and row.gpu_temperature_gpu is not none else 'N/A' }}</td>
+                  {% endif %}
                 </tr>
                 {% endfor %}
               </tbody>
@@ -82,9 +98,30 @@
       const durationData = {{ duration_plot_json | safe }};
       Plotly.newPlot('duration-chart', durationData.data, durationData.layout);
       {% endif %}
+      
       {% if has_memory %}
       const memoryData = {{ memory_plot_json | safe }};
       Plotly.newPlot('memory-chart', memoryData.data, memoryData.layout);
+      {% endif %}
+      
+      {% if has_gpu %}
+        {% if gpu_util_plot_json != 'null' %}
+        try {
+            const gpuUtilData = {{ gpu_util_plot_json | safe }};
+            Plotly.newPlot('gpu-utilization-chart', gpuUtilData.data, gpuUtilData.layout);
+        } catch (e) {
+            console.error("Error rendering GPU utilization chart:", e);
+        }
+        {% endif %}
+        
+        {% if gpu_memory_plot_json != 'null' %}
+        try {
+            const gpuMemoryData = {{ gpu_memory_plot_json | safe }};
+            Plotly.newPlot('gpu-memory-chart', gpuMemoryData.data, gpuMemoryData.layout);
+        } catch (e) {
+            console.error("Error rendering GPU memory chart:", e);
+        }
+        {% endif %}
       {% endif %}
     </script>
   </body>
