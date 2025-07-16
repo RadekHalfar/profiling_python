@@ -88,7 +88,7 @@
                 <tr>
                   <th class="sortable" onclick="sortTable(0, 'string')">Step</th>
                   {% if has_time %}<th class="sortable" onclick="sortTable(1, 'number')">Duration (s)</th>{% endif %}
-                  {% if has_memory %}<th class="sortable" onclick="sortTable({{ 2 if has_time else 1 }}, 'number')">RAM Δ (KB)</th>{% endif %}
+                  {% if has_memory %}<th class="sortable" onclick="sortTable({{ 2 if has_time else 1 }}, 'number')">RAM Δ (MB)</th>{% endif %}
                   {% if has_gpu %}
                     <th class="sortable" onclick="sortTable({{ 3 if has_time and has_memory else 2 if has_time or has_memory else 1 }}, 'number')">GPU Util (%)</th>
                     <th class="sortable" onclick="sortTable({{ 4 if has_time and has_memory else 3 if has_time or has_memory else 1 }}, 'number')">GPU Mem Used (MB)</th>
@@ -102,7 +102,7 @@
                 <tr>
                   <td>{{ row.step }}</td>
                   {% if has_time %}<td>{{ "%.3f"|format(row.duration) if row.duration is not none else 'N/A' }}</td>{% endif %}
-                  {% if has_memory %}<td>{{ "%.1f"|format(row.memory_kb) if row.memory_kb is not none else 'N/A' }}</td>{% endif %}
+                  {% if has_memory %}<td>{{ "%.2f"|format(row.memory_mb) if row.memory_mb is not none else 'N/A' }}</td>{% endif %}
                   {% if has_gpu %}
                     <td>{{ "%.1f"|format(row.gpu_utilization) if 'gpu_utilization' in row and row.gpu_utilization is not none else 'N/A' }}</td>
                     <td>{{ "%.1f"|format(row.gpu_memory_used_mb) if 'gpu_memory_used_mb' in row and row.gpu_memory_used_mb is not none else 'N/A' }}</td>

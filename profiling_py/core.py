@@ -4,9 +4,10 @@ from __future__ import annotations
 from contextlib import contextmanager
 from dataclasses import dataclass, asdict, field
 from typing import Dict, List, Optional, Any, Tuple
-import tracemalloc
 import time
 import warnings
+import psutil
+import os
 
 from .gpu import GPUProfiler, get_default_gpu_profiler
 
@@ -66,9 +67,10 @@ class Profiler:
         self._active_steps: Dict[str, Tuple[float, Optional[GPUProfiler]]] = {}
         self._steps: List[_StepRow] = []
         self._gpu_profiler: Optional[GPUProfiler] = None
+        self._process: Optional[psutil.Process] = None
 
         if self.enable_memory:
-            tracemalloc.start()
+            self._process = psutil.Process(os.getpid())
             
         if self.enable_gpu:
             try:
@@ -84,8 +86,8 @@ class Profiler:
 
     def __del__(self):
         """Clean up resources when the profiler is garbage collected."""
-        if self.enable_memory:
-            tracemalloc.stop()
+        if hasattr(self, '_process'):
+            del self._process
         if hasattr(self, '_gpu_profiler') and self._gpu_profiler:
             try:
                 self._gpu_profiler.shutdown()
@@ -130,10 +132,7 @@ class Profiler:
         # Get memory usage
         memory_bytes: Optional[int] = None
         if self.enable_memory:
-            snap_after = tracemalloc.take_snapshot()
-            snap_before = tracemalloc.take_snapshot()
-            stats = snap_after.compare_to(snap_before, "filename")
-            memory_bytes = sum(s.size_diff for s in stats)
+            memory_bytes = self._process.memory_info().rss
         
         # Get GPU metrics at the end of the step
         gpu_metrics = {}

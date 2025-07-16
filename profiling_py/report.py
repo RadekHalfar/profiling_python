@@ -85,14 +85,14 @@ def _build_plots(rows: List[Dict[str, Any]], has_memory: bool, has_gpu: bool = F
             }
     
     # Check if we have memory data to plot
-    if has_memory and rows and "memory_kb" in rows[0]:
+    if has_memory and rows and "memory_mb" in rows[0]:
         # Prepare data for memory plot
         steps = []
         memory_values = []
         for r in rows:
-            if "memory_kb" in r and r["memory_kb"] is not None:
+            if "memory_mb" in r and r["memory_mb"] is not None:
                 steps.append(str(r["step"]))
-                memory_values.append(float(r["memory_kb"]))
+                memory_values.append(float(r["memory_mb"]))
         
         # Manually create the plot data structure
         memory_plot = {
@@ -114,9 +114,9 @@ def _build_plots(rows: List[Dict[str, Any]], has_memory: bool, has_gpu: bool = F
                     "automargin": True
                 },
                 "xaxis": {
-                    "title": "RAM (KB)",
+                    "title": "RAM (MB)",
                     "type": "linear",
-                    "tickformat": ".1f"
+                    "tickformat": ".2f"
                 },
                 "height": 400,
                 "width": 1200,
@@ -268,7 +268,7 @@ def generate_profiling_report(
         row = {
             "step": step.step,
             "duration": step.duration if measure_time and step.duration is not None else None,
-            "memory_kb": (step.memory_bytes / 1024.0) if measure_ram and step.memory_bytes is not None else None,
+            "memory_mb": (step.memory_bytes / (1024.0 * 1024.0)) if measure_ram and step.memory_bytes is not None else None,
         }
         
         # Add GPU metrics if available
@@ -293,7 +293,7 @@ def generate_profiling_report(
         rows.append(row)
     
     # Check if we have any memory and GPU data
-    has_memory = measure_ram and any(r.get("memory_kb") is not None for r in rows)
+    has_memory = measure_ram and any(r.get("memory_mb") is not None for r in rows)
     has_gpu = measure_gpu and any(k.startswith('gpu_') for r in rows for k in r)
     
     # Build plots
@@ -317,8 +317,8 @@ def generate_profiling_report(
     kpis.append({"label": "Steps", "value": str(len(rows))})
     
     if profiler.enable_memory and has_memory:
-        peak_mem_kb = max((r.get("memory_kb", 0) for r in rows), default=0)
-        kpis.append({"label": "Peak RAM Δ (KB)", "value": f"{peak_mem_kb:.1f}"})
+        peak_mem_mb = max((r.get("memory_mb", 0) for r in rows), default=0)
+        kpis.append({"label": "Peak RAM Δ (MB)", "value": f"{peak_mem_mb:.2f}"})
     
     # Add GPU KPIs if available
     if profiler.enable_gpu and has_gpu:
@@ -349,7 +349,7 @@ def generate_profiling_report(
     
     # Get rows with the required data for each plot type
     time_rows = [r for r in rows if "duration" in r and r["duration"] is not None]
-    memory_rows = [r for r in rows if "memory_kb" in r and r["memory_kb"] is not None]
+    memory_rows = [r for r in rows if "memory_mb" in r and r["memory_mb"] is not None]
     gpu_util_rows = [r for r in rows if "gpu_utilization" in r and r["gpu_utilization"] is not None]
     gpu_memory_rows = [r for r in rows if "gpu_memory_delta_mb" in r and r["gpu_memory_delta_mb"] is not None]
     
