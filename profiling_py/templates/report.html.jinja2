@@ -88,7 +88,7 @@
                 <tr>
                   <th class="sortable" onclick="sortTable(0, 'string')">Step</th>
                   {% if has_time %}<th class="sortable" onclick="sortTable(1, 'number')">Duration (s)</th>{% endif %}
-                  {% if has_memory %}<th class="sortable" onclick="sortTable({{ 2 if has_time else 1 }}, 'number')">RAM Δ (MB)</th>{% endif %}
+                  {% if has_memory %}<th class="sortable" onclick="sortTable({{ 2 if has_time else 1 }}, 'number')">RAM Usage (MB)</th>{% endif %}
                   {% if has_gpu %}
                     <th class="sortable" onclick="sortTable({{ 3 if has_time and has_memory else 2 if has_time or has_memory else 1 }}, 'number')">GPU Util (%)</th>
                     <th class="sortable" onclick="sortTable({{ 4 if has_time and has_memory else 3 if has_time or has_memory else 1 }}, 'number')">GPU Mem Used (MB)</th>

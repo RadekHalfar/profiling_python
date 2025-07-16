@@ -103,7 +103,7 @@ def _build_plots(rows: List[Dict[str, Any]], has_memory: bool, has_gpu: bool = F
                 "orientation": "h"
             }],
             "layout": {
-                "title": "RAM Δ by Step",
+                "title": "RAM Usage by Step",
                 "yaxis": {
                     "title": "Step",
                     "categoryorder": "total ascending",
@@ -318,7 +318,7 @@ def generate_profiling_report(
     
     if profiler.enable_memory and has_memory:
         peak_mem_mb = max((r.get("memory_mb", 0) for r in rows), default=0)
-        kpis.append({"label": "Peak RAM Δ (MB)", "value": f"{peak_mem_mb:.2f}"})
+        kpis.append({"label": "Peak RAM Usage (MB)", "value": f"{peak_mem_mb:.2f}"})
     
     # Add GPU KPIs if available
     if profiler.enable_gpu and has_gpu:
